@@ -1,0 +1,101 @@
+version: '3.8'
+
+services:
+  # База данных PostgreSQL
+  postgres:
+    image: postgres:latest
+    container_name: curlylab-postgres
+    environment:
+      POSTGRES_DB: curlylab
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: s1p2u3e4r
+      POSTGRES_TCP_KEEPALIVES_IDLE: 60
+      POSTGRES_TCP_KEEPALIVES_INTERVAL: 10
+      POSTGRES_TCP_KEEPALIVES_COUNT: 10
+      POSTGRES_MAX_CONNECTIONS: 100
+      POSTGRES_SSL_MODE: disable
+    ports:
+      - "5432:5432"
+    networks:
+      - curlylab-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d curlylab"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Очередь RabbitMQ
+  rabbitmq:
+    image: rabbitmq:management
+    container_name: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"   # AMQP protocol
+      - "15672:15672"
+    networks:
+      - curlylab-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Сервис основной логики (Backend)
+  backend:
+    build:
+      context: ./curlylab-backend  # путь к папке с Dockerfile для backend
+      dockerfile: Dockerfile
+    container_name: curlylab-backend-service
+    ports:
+      - "8081:8080"  # если backend слушает на 8080 внутри контейнера
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - curlylab-network
+    restart: unless-stopped
+
+  # Сервис нейронки
+  composition-ai:
+    build:
+      context: ./curlylab-composition-ai  # путь к папке с Dockerfile для neuro-service
+      dockerfile: Dockerfile
+    container_name: curlylab-composition-ai-service
+    environment:
+      - "8082:8080"  # если neuro-service тоже использует порт 8080
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - curlylab-network
+    restart: unless-stopped
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: ./curlylab-api-gateway # путь к папке с Dockerfile для api-gateway
+      dockerfile: Dockerfile
+    container_name: curlylab-api-gateway
+    ports:
+      - "8080:8080"  # внешний порт для доступа к приложению
+    depends_on:
+      backend:
+        condition: service_started
+      composition-ai:
+        condition: service_started
+    environment:
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+    networks:
+      - curlylab-network
+    restart: unless-stopped
+
+networks:
+  curlylab-network:
+    driver: bridge

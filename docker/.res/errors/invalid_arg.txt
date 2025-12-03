@@ -1,0 +1,4 @@
+Invalid amount of arguments!
+
+Usage:
+	init.sh PATH_TO_JAVA_SDK
