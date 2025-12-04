@@ -59,7 +59,7 @@ services:
       - curlylab-network
     restart: unless-stopped
 
-  # Сервис нейронки
+  # Composition AI
   composition-ai:
     build:
       context: ./curlylab-composition-ai  # путь к папке с Dockerfile для neuro-service
@@ -67,6 +67,21 @@ services:
     container_name: curlylab-composition-ai-service
     environment:
       - "8082:8080"  # если neuro-service тоже использует порт 8080
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - curlylab-network
+    restart: unless-stopped
+
+  # Porosity AI
+  hair-porosity-ai:
+    build:
+      context: ./curlylab-hair-porosity-ai  # путь к папке с Dockerfile для neuro-service
+      dockerfile: Dockerfile
+    container_name: curlylab-porosity-ai-service
+    environment:
+      - "8083:8080"  # если neuro-service тоже использует порт 8080
     depends_on:
       rabbitmq:
         condition: service_healthy
