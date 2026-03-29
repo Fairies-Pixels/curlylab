@@ -14,6 +14,20 @@ GATEWAY=curlylab-api-gateway
 COMPOSITION=curlylab-composition-ai
 POROSITY=curlylab-hair-porosity-ai
 
+if [ ! -f env.sh ]
+then
+	cat .res/errors/no_env.txt
+	exit
+fi
+
+if [ ! -f swa_convnext.pt ]
+then
+	cat .res/errors/no_model.txt
+	exit
+fi
+
+source env.sh
+
 echo "Fetching repositories..."
 echo "---[ Fetching API-Gateway Repo ]"
 git clone https://github.com/Fairies-Pixels/curlylab-api-gateway.git $GATEWAY
