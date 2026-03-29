@@ -1,0 +1,2 @@
+There is no swa_convnext.pt file!
+Please, obtain swa_convnext.pt using secure way.

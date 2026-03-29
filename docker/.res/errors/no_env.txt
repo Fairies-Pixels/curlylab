@@ -1,0 +1,2 @@
+There is no env.sh file!
+Please, obtain env.sh using secure way.

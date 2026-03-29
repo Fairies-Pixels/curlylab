@@ -14,18 +14,71 @@ GATEWAY=curlylab-api-gateway
 COMPOSITION=curlylab-composition-ai
 POROSITY=curlylab-hair-porosity-ai
 
+if [ ! -f env.sh ]
+then
+	cat .res/errors/no_env.txt
+	exit
+fi
+
+if [ ! -f swa_convnext.pt ]
+then
+	cat .res/errors/no_model.txt
+	exit
+fi
+
+source env.sh
+
 echo "Fetching repositories..."
 echo "---[ Fetching API-Gateway Repo ]"
-git clone https://github.com/Fairies-Pixels/curlylab-api-gateway.git $GATEWAY
+pushd .
+if [ -d $GATEWAY ]
+then
+	cd $GATEWAY
+	git fetch
+else
+	git clone https://github.com/Fairies-Pixels/curlylab-api-gateway.git $GATEWAY
+	cd $GATEWAY
+	chmod +x gradlew
+fi
+popd
 echo "---[ Fetched! ]"
+
 echo "---[ Fetching Backend Repo ]"
-git clone https://github.com/Fairies-Pixels/curlylab-backend.git $BACKEND
+pushd .
+if [ -d $BACKEND ]
+then
+	cd $BACKEND
+	git fetch
+else
+	git clone https://github.com/Fairies-Pixels/curlylab-backend.git $BACKEND
+	cd $BACKEND
+	chmod +x gradlew
+fi
+popd
 echo "---[ Fetched! ]"
+
 echo "---[ Fetching Composition AI Service ]"
-git clone https://github.com/Fairies-Pixels/curlylab-hair_ai.git -b feature/consists-check-service $COMPOSITION
+pushd .
+if [ -d $COMPOSITION ]
+then
+	cd $COMPOSITION
+	git fetch
+else
+	git clone https://github.com/Fairies-Pixels/curlylab-hair_ai.git -b feature/consists-check-service $COMPOSITION
+fi
+popd
 echo "---[ Fetched! ]"
+
 echo "---[ Fetching Hair's Porosity AI Service ]"
-git clone https://github.com/Fairies-Pixels/curlylab-hair_ai.git -b feature/hair-porosity-service $POROSITY
+pushd .
+if [ -d $POROSITY ]
+then
+	cd $POROSITY
+	git fetch
+else
+	git clone https://github.com/Fairies-Pixels/curlylab-hair_ai.git -b feature/hair-porosity-service $POROSITY
+fi
+popd
 echo "---[ Fetched! ]"
 echo "Done!"
 
