@@ -15,7 +15,7 @@ USER curlylab
 
 WORKDIR /app
 
-COPY build/libs/*.jar app.jar
+COPY build/libs/*SNAPSHOT.jar app.jar
 
 EXPOSE 8080
 
