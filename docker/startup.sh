@@ -14,6 +14,17 @@ GATEWAY=curlylab-api-gateway
 COMPOSITION=curlylab-composition-ai
 POROSITY=curlylab-hair-porosity-ai
 
+# This variable is used as an argumet to echo command.
+FETCHED="Fetched!"
+CLONED="Cloned!"
+UP_TO_DATE="Up-to-date!"
+LAST_STATUS=""
+
+# This variables are used as flags to conditional building of
+# kotlin applications.
+BACKEND_NEEDS_BUILD=1
+GATEWAY_NEEDS_BUILD=1
+
 if [ ! -f env.sh ]
 then
 	cat .res/errors/no_env.txt
@@ -35,13 +46,22 @@ if [ -d $GATEWAY ]
 then
 	cd $GATEWAY
 	git fetch
+
+	if [ $# -eq 0 ]
+	then
+		LAST_STATUS=$FETCHED
+	else
+		GATEWAY_NEEDS_BUILD=0
+		LAST_STATUS=$UP_TO_DATE
+	fi
 else
-	git clone https://github.com/Fairies-Pixels/curlylab-api-gateway.git $GATEWAY
+	git clone git@github.com:Fairies-Pixels/curlylab-api-gateway.git $GATEWAY
 	cd $GATEWAY
 	chmod +x gradlew
+	LAST_STATUS=$CLONED
 fi
 popd
-echo "---[ Fetched! ]"
+echo "---[ $LAST_STATUS ]"
 
 echo "---[ Fetching Backend Repo ]"
 pushd .
@@ -49,13 +69,22 @@ if [ -d $BACKEND ]
 then
 	cd $BACKEND
 	git fetch
+
+	if [ $# -eq 0 ]
+	then
+		LAST_STATUS=$FETCHED
+	else
+		BACKEND_NEEDS_BUILD=0
+		LAST_STATUS=$UP_TO_DATE
+	fi
 else
-	git clone https://github.com/Fairies-Pixels/curlylab-backend.git $BACKEND
+	git clone git@github.com:Fairies-Pixels/curlylab-backend.git $BACKEND
 	cd $BACKEND
 	chmod +x gradlew
+	LAST_STATUS=$CLONED
 fi
 popd
-echo "---[ Fetched! ]"
+echo "---[ $LAST_STATUS ]"
 
 echo "---[ Fetching Composition AI Service ]"
 pushd .
@@ -63,11 +92,19 @@ if [ -d $COMPOSITION ]
 then
 	cd $COMPOSITION
 	git fetch
+
+	if [ $# -eq 0 ]
+	then
+		LAST_STATUS=$FETCHED
+	else
+		LAST_STATUS=$UP_TO_DATE
+	fi
 else
-	git clone https://github.com/Fairies-Pixels/curlylab-hair_ai.git -b feature/consists-check-service $COMPOSITION
+	git clone git@github.com:Fairies-Pixels/curlylab-hair_ai.git -b feature/consists-check-service $COMPOSITION
+	LAST_STATUS=$CLONED
 fi
 popd
-echo "---[ Fetched! ]"
+echo "---[ $LAST_STATUS ]"
 
 echo "---[ Fetching Hair's Porosity AI Service ]"
 pushd .
@@ -75,25 +112,39 @@ if [ -d $POROSITY ]
 then
 	cd $POROSITY
 	git fetch
+
+	if [ $# -eq 0 ]
+	then
+		LAST_STATUS=$FETCHED
+	else
+		LAST_STATUS=$UP_TO_DATE
+	fi
 else
-	git clone https://github.com/Fairies-Pixels/curlylab-hair_ai.git -b feature/hair-porosity-service $POROSITY
+	git clone git@github.com:Fairies-Pixels/curlylab-hair_ai.git -b feature/hair-porosity-service $POROSITY
+	LAST_STATUS=$CLONED
 fi
 popd
-echo "---[ Fetched! ]"
+echo "---[ $LAST_STATUS ]"
 echo "Done!"
 
 echo "Build applications..."
 echo "---[ Build API Gateway ]"
-pushd .
-cd $GATEWAY
-./gradlew assemble
-popd
+if [ $GATEWAY_NEEDS_BUILD -eq 1 ]
+then
+	pushd .
+	cd $GATEWAY
+	./gradlew assemble
+	popd
+fi
 echo "---[ Built! ]"
 echo "---[ Build Backend ]"
-pushd .
-cd $BACKEND
-./gradlew assemble
-popd
+if [ $BACKEND_NEEDS_BUILD -eq 1 ]
+then
+	pushd .
+	cd $BACKEND
+	./gradlew assemble
+	popd
+fi
 echo "---[ Built! ]"
 echo "Done!"
 
